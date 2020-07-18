@@ -35,12 +35,12 @@
             this.lblStatus = new System.Windows.Forms.Label();
             this.picPanel = new System.Windows.Forms.Panel();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.lblColorPalette = new System.Windows.Forms.Label();
-            this.comboColorPalette = new System.Windows.Forms.ComboBox();
-            this.chkInvertPalette = new System.Windows.Forms.CheckBox();
+            this.checkRemoveBorder = new System.Windows.Forms.CheckBox();
+            this.btnSave = new System.Windows.Forms.Button();
             this.lblMagnify = new System.Windows.Forms.Label();
             this.comboMagnify = new System.Windows.Forms.ComboBox();
-            this.btnSave = new System.Windows.Forms.Button();
+            this.lblColorPalette = new System.Windows.Forms.Label();
+            this.comboColorPalette = new System.Windows.Forms.ComboBox();
             this.panel2.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -52,7 +52,7 @@
             this.comboSerialPort.Name = "comboSerialPort";
             this.comboSerialPort.Size = new System.Drawing.Size(70, 21);
             this.comboSerialPort.TabIndex = 0;
-            this.comboSerialPort.DropDown += new System.EventHandler(this.comboSerialPort_DropDown);
+            this.comboSerialPort.DropDown += new System.EventHandler(this.onSerialPortDropdown);
             // 
             // btnSerialConnect
             // 
@@ -62,7 +62,7 @@
             this.btnSerialConnect.TabIndex = 1;
             this.btnSerialConnect.Text = "Connect";
             this.btnSerialConnect.UseVisualStyleBackColor = true;
-            this.btnSerialConnect.Click += new System.EventHandler(this.btnSerialConnect_Click);
+            this.btnSerialConnect.Click += new System.EventHandler(this.onConnect);
             // 
             // lblSerialPort
             // 
@@ -110,10 +110,10 @@
             // 
             this.panel2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel2.Controls.Add(this.checkRemoveBorder);
             this.panel2.Controls.Add(this.btnSave);
             this.panel2.Controls.Add(this.lblMagnify);
             this.panel2.Controls.Add(this.comboMagnify);
-            this.panel2.Controls.Add(this.chkInvertPalette);
             this.panel2.Controls.Add(this.lblColorPalette);
             this.panel2.Controls.Add(this.comboColorPalette);
             this.panel2.Controls.Add(this.lblSerialPort);
@@ -125,35 +125,27 @@
             this.panel2.Size = new System.Drawing.Size(742, 73);
             this.panel2.TabIndex = 8;
             // 
-            // lblColorPalette
+            // checkRemoveBorder
             // 
-            this.lblColorPalette.AutoSize = true;
-            this.lblColorPalette.Location = new System.Drawing.Point(231, 9);
-            this.lblColorPalette.Name = "lblColorPalette";
-            this.lblColorPalette.Size = new System.Drawing.Size(70, 13);
-            this.lblColorPalette.TabIndex = 8;
-            this.lblColorPalette.Text = "Color Palette:";
+            this.checkRemoveBorder.AutoSize = true;
+            this.checkRemoveBorder.Location = new System.Drawing.Point(361, 52);
+            this.checkRemoveBorder.Name = "checkRemoveBorder";
+            this.checkRemoveBorder.Size = new System.Drawing.Size(139, 17);
+            this.checkRemoveBorder.TabIndex = 13;
+            this.checkRemoveBorder.Text = "Remove Camera Border";
+            this.checkRemoveBorder.UseVisualStyleBackColor = true;
+            this.checkRemoveBorder.CheckedChanged += new System.EventHandler(this.checkRemoveBorder_CheckedChanged);
             // 
-            // comboColorPalette
+            // btnSave
             // 
-            this.comboColorPalette.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboColorPalette.FormattingEnabled = true;
-            this.comboColorPalette.Location = new System.Drawing.Point(234, 25);
-            this.comboColorPalette.Name = "comboColorPalette";
-            this.comboColorPalette.Size = new System.Drawing.Size(121, 21);
-            this.comboColorPalette.TabIndex = 7;
-            this.comboColorPalette.SelectedIndexChanged += new System.EventHandler(this.comboColorPalette_SelectedIndexChanged);
-            // 
-            // chkInvertPalette
-            // 
-            this.chkInvertPalette.AutoSize = true;
-            this.chkInvertPalette.Location = new System.Drawing.Point(234, 52);
-            this.chkInvertPalette.Name = "chkInvertPalette";
-            this.chkInvertPalette.Size = new System.Drawing.Size(53, 17);
-            this.chkInvertPalette.TabIndex = 9;
-            this.chkInvertPalette.Text = "Invert";
-            this.chkInvertPalette.UseVisualStyleBackColor = true;
-            this.chkInvertPalette.CheckedChanged += new System.EventHandler(this.chkInvertPalette_CheckedChanged);
+            this.btnSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSave.Location = new System.Drawing.Point(655, 40);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(75, 23);
+            this.btnSave.TabIndex = 12;
+            this.btnSave.Text = "Save...";
+            this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
             // lblMagnify
             // 
@@ -178,16 +170,24 @@
             this.comboMagnify.TabIndex = 10;
             this.comboMagnify.SelectedIndexChanged += new System.EventHandler(this.comboMagnify_SelectedIndexChanged);
             // 
-            // btnSave
+            // lblColorPalette
             // 
-            this.btnSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSave.Location = new System.Drawing.Point(655, 40);
-            this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(75, 23);
-            this.btnSave.TabIndex = 12;
-            this.btnSave.Text = "Save...";
-            this.btnSave.UseVisualStyleBackColor = true;
-            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            this.lblColorPalette.AutoSize = true;
+            this.lblColorPalette.Location = new System.Drawing.Point(231, 9);
+            this.lblColorPalette.Name = "lblColorPalette";
+            this.lblColorPalette.Size = new System.Drawing.Size(70, 13);
+            this.lblColorPalette.TabIndex = 8;
+            this.lblColorPalette.Text = "Color Palette:";
+            // 
+            // comboColorPalette
+            // 
+            this.comboColorPalette.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboColorPalette.FormattingEnabled = true;
+            this.comboColorPalette.Location = new System.Drawing.Point(234, 25);
+            this.comboColorPalette.Name = "comboColorPalette";
+            this.comboColorPalette.Size = new System.Drawing.Size(121, 21);
+            this.comboColorPalette.TabIndex = 7;
+            this.comboColorPalette.SelectedIndexChanged += new System.EventHandler(this.comboColorPalette_SelectedIndexChanged);
             // 
             // MainForm
             // 
@@ -199,7 +199,7 @@
             this.Controls.Add(this.txtSerialLog);
             this.Name = "MainForm";
             this.Text = "Game Boy Printer Emulator - Client";
-            this.Load += new System.EventHandler(this.MainForm_OnLoad);
+            this.Load += new System.EventHandler(this.onFormOpening);
             this.panel2.ResumeLayout(false);
             this.panel2.PerformLayout();
             this.ResumeLayout(false);
@@ -218,10 +218,10 @@
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.Label lblColorPalette;
         private System.Windows.Forms.ComboBox comboColorPalette;
-        private System.Windows.Forms.CheckBox chkInvertPalette;
         private System.Windows.Forms.Label lblMagnify;
         private System.Windows.Forms.ComboBox comboMagnify;
         private System.Windows.Forms.Button btnSave;
+        private System.Windows.Forms.CheckBox checkRemoveBorder;
     }
 }
 

@@ -1,200 +1,32 @@
 ﻿
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Threading;
 using System.IO.Ports;
 using System.IO;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
+using static gameboy_printer_windows.Constants;
+using static gameboy_printer_windows.ImageProcessing;
+
 
 namespace gameboy_printer_windows
 {
     public partial class MainForm : Form
     {
-        /// <summary>
-        /// Printing status
-        /// </summary>
-        private enum PrintStatus
-        {
-            /// <summary>
-            /// Serial Port not connected
-            /// </summary>
-            NOT_CONNECTED,
-            /// <summary>
-            /// Serial Port connected, idle
-            /// </summary>
-            CONNECTED,
-            /// <summary>
-            /// Receiving data
-            /// </summary>
-            PRINTING,
-            /// <summary>
-            /// Data received
-            /// </summary>
-            DONE
-        };
-
-        /// <summary>
-        /// Defines a custom game boy palette (4 colours and a name)
-        /// </summary>
-        private struct Palette
-        {
-            public string name;
-            public uint[] palette;
-            public override string ToString()
-            {
-                return name;
-            }
-        };
-
-        /// <summary>
-        /// Available palettes
-        /// Credit: https://lospec.com/
-        /// </summary>
-        private Palette[] m_Palettes =  {
-
-                new Palette
-                {
-                    name = "Original DMG",
-                    palette = new uint[]
-                    {
-                        0xFFE0F8D0,
-                        0xFF88C070,
-                        0xFF346856,
-                        0xFF081820
-                    }
-                },
-                new Palette
-                {
-                    name = "Original DMG Blue",
-                    palette = new uint[]
-                    {
-                        0xFFd1d0f8,
-                        0xFF7074c0,
-                        0xFF343968,
-                        0xFF0a0820
-                    }
-                },
-                new Palette
-                {
-                    name = "Original DMG Red",
-                    palette = new uint[]
-                    {
-                        0xFFf8d0d0,
-                        0xFFc07070,
-                        0xFF683434,
-                        0xFF200808
-                    }
-                },
-                new Palette
-                {
-                    name = "Original DMG Grayscale",
-                    palette = new uint[]
-                    {
-                        0xFFf7f7f7,
-                        0xFFbfbfbf,
-                        0xFF696969,
-                        0xFF212121
-                    }
-                },
-                new Palette
-                {
-                    name = "Ice Cream by Kerrie Lake",
-                    palette = new uint[]
-                    {
-                        0xFFfff6d3,
-                        0xFFf9a875,
-                        0xFFeb6b6f,
-                        0xFF7c3f58
-                    }
-                },
-                new Palette
-                {
-                    name = "Kirokaze Gameboy by Kirokaze",
-                    palette = new uint[]
-                    {
-                        0xFFe2f3e4,
-                        0xFF94e344,
-                        0xFF46878f,
-                        0xFF332c50
-                    }
-                },
-                new Palette
-                {
-                    name = "Rustic GB by Kerrie Lake",
-                    palette = new uint[]
-                    {
-                        0xFFedb4a1,
-                        0xFFa96868,
-                        0xFF764462,
-                        0xFF2c2137
-                    }
-                },
-                new Palette
-                {
-                    name = "Mist GB by Kerrie Lake",
-                    palette = new uint[]
-                    {
-                        0xFFc4f0c2,
-                        0xFF5ab9a8,
-                        0xFF1e606e,
-                        0xFF2d1b00
-                    }
-                },
-                new Palette
-                {
-                    name = "AYY4 by Polyducks",
-                    palette = new uint[]
-                    {
-                        0xFFf1f2da,
-                        0xFFffce96,
-                        0xFFff7777,
-                        0xFF00303b
-                    }
-                },
-                new Palette
-                {
-                    name = "SpaceHaze by WildLeoKnight",
-                    palette = new uint[]
-                    {
-                        0xFFf8e3c4,
-                        0xFFcc3495,
-                        0xFF6b1fb1,
-                        0xFF0b0630,
-
-                    }
-                },
-                new Palette
-                {
-                    name = "Wish GB by Kerrie Lake",
-                    palette = new uint[]
-                    {
-                        0xFF8be5ff,
-                        0xFF608fcf ,
-                        0xFF7550e8 ,
-                        0xFF622e4c ,
-
-                    }
-                },
-
-        };
 
 
-
-
-        // Hidden stuff, use properties
+        #region Hidden by Properties
         private bool mh_bIsConnected = false;
         private PrintStatus mh_PrintStatus = PrintStatus.NOT_CONNECTED;
+        #endregion
 
+       
         private PrintStatus m_PrintStatus
         {
             get
@@ -203,7 +35,9 @@ namespace gameboy_printer_windows
             }
             set
             {
-                SetStatus(string.Format("Status: {0}!", value.ToString()));
+
+
+                SetStatus(value);
                 mh_PrintStatus = value;
             }
         }
@@ -219,20 +53,17 @@ namespace gameboy_printer_windows
                 btnSerialConnect.Text = value ? "Disconnect" : "Connect";
                 m_PrintStatus = value ? PrintStatus.CONNECTED : PrintStatus.NOT_CONNECTED;
                 mh_bIsConnected = value;
+
             }
         }
-        private List<string> m_ListAvailablePortNames;
-        private SerialPort m_ConnectedSerialPort;
-
-        private const int SERIAL_BUFFER_LEN = 512;
-        private const int TILE_PIXEL_WIDTH = 8;
-        private const int TILE_PIXEL_HEIGHT = 8;
-        private const int TILES_PER_LINE = 20; // Gameboy Printer Tile Constant
-        private byte[] m_SerialBuffer = new byte[SERIAL_BUFFER_LEN];
+        private List<string> m_listAvailablePortNames;
+        private SerialPort m_connectedSerialPort;
+        private byte[] m_serialBuffer = new byte[SERIAL_BUFFER_LEN];
+        private List<byte[]> m_listTiles = new List<byte[]>();
+        private List<Palette> m_listPalettes;
+        private Bitmap m_currentBitmap;
 
 
-
-        private List<byte[]> m_Tiles = new List<byte[]>();
 
 
 
@@ -244,75 +75,160 @@ namespace gameboy_printer_windows
 
         private void UpdateSerialPorts()
         {
-            if (m_bIsConnected)
-                return;
-            m_ListAvailablePortNames = SerialPort.GetPortNames().ToList();
+            comboSerialPort.DataSource = null;
+            m_listAvailablePortNames = SerialPort.GetPortNames().ToList();
+            comboSerialPort.DataSource = m_listAvailablePortNames;
+        }
+        private void UpdatePalettes()
+        {
+            comboColorPalette.DataSource = null;
+            try
+            {
+                m_listPalettes = PaletteLoader.FetchPalettes("palette.json");
+            } catch (FileNotFoundException)
+            {
+                MessageBox.Show("Could not find palette.json", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Environment.Exit(0);
+            }
+            comboColorPalette.DataSource = m_listPalettes;
         }
 
-        private void MainForm_OnLoad(object sender, EventArgs e)
+        private void onFormOpening(object sender, EventArgs e)
         {
+            // Fetch serial ports
             UpdateSerialPorts();
-            comboSerialPort.DataSource = m_ListAvailablePortNames;
-            comboColorPalette.DataSource = m_Palettes;
+
+            // Fetch palettes
+            UpdatePalettes();
+
+            // 2x looks fine
             comboMagnify.SelectedIndex = 1;
 
+            // Default status
+            m_PrintStatus = PrintStatus.NOT_CONNECTED;
+
         }
 
-        private void comboSerialPort_DropDown(object sender, EventArgs e)
+        private void onSerialPortDropdown(object sender, EventArgs e)
         {
             UpdateSerialPorts();
         }
 
-        private void btnSerialConnect_Click(object sender, EventArgs e)
+        private void onConnect(object sender, EventArgs e)
         {
             if (m_bIsConnected)
             {
-                m_ConnectedSerialPort.Close();
+                // Disconnect
+                m_connectedSerialPort.Close();
                 m_bIsConnected = false;
             }
             else
             {
-                m_ConnectedSerialPort = new SerialPort((string)comboSerialPort.SelectedItem, 115200);
-                m_ConnectedSerialPort.ReadTimeout = 500;
-                m_ConnectedSerialPort.DataReceived += OnSerialDataReceived;
-                m_ConnectedSerialPort.NewLine = "\n";
-                //m_ConnectedSerialPort.ReceivedBytesThreshold = SERIAL_BUFFER_LEN;
-                m_ConnectedSerialPort.Open();
+                // Connect
+                m_connectedSerialPort = new SerialPort((string)comboSerialPort.SelectedItem, SERIAL_BAUD_RATE);
+                m_connectedSerialPort.ReadTimeout = 500;
+                m_connectedSerialPort.DataReceived += onSerialDataReceived;
+                m_connectedSerialPort.NewLine = "\n";
+                m_connectedSerialPort.Open();
                 m_bIsConnected = true;
             }
 
         }
 
         string m_strDecodedBuffer;
-        private void OnSerialDataReceived(object sender, SerialDataReceivedEventArgs e)
+        private void onSerialDataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            var len = m_ConnectedSerialPort.Read(m_SerialBuffer, 0, SERIAL_BUFFER_LEN);
+            // This method makes sure that we only parse full lines
+            // WARNING: This method *might* skip the last line of data, but it doesn't really matter.
+            // TODO Still clean this up
 
-            string buffer = m_strDecodedBuffer + Encoding.Default.GetString(m_SerialBuffer, 0, len);
 
+            // Fetch as much data as we can store 
+            var len = m_connectedSerialPort.Read(m_serialBuffer, 0, SERIAL_BUFFER_LEN);
+            // Append to what we still have
+            string buffer = m_strDecodedBuffer + Encoding.Default.GetString(m_serialBuffer, 0, len);
+            // Clear the buffer for now
             m_strDecodedBuffer = "";
-
+            // Split by newline
             var lines = buffer.Split('\n');
-
+            // This discards the last line and processes any line that was sent in full
             for (int i = 0; i < lines.Length - 1; i++)
             {
                 var line = lines[i];
-                OnLineReceived(line.Trim());
+                onSerialDataReceived_FullLine(line.Trim());
             }
+            // Store the unfinished line for safekeeping
             m_strDecodedBuffer = lines[lines.Length - 1];
-
-
-
-
-
-
         }
 
-        private void OnLineReceived(string line)
+        private void onSerialDataReceived_FullLine(string line)
         {
             LogData(line);
             ProcessData(line);
         }
+
+
+        private void ProcessData(string text)
+        {
+            // Skip empty lines
+            if (string.IsNullOrWhiteSpace(text)) return;
+
+            // Nono, we have proper json parsing here.
+            // Lines that start with ! are treated as JSON data
+            if (text.StartsWith("!"))
+            {
+                var json = text.Substring(1);
+                Console.WriteLine("[DBG] Parsing as json line {0}", json);
+                // This is so cool.
+                dynamic jsondata = JValue.Parse(json);
+
+                switch ((string)jsondata.command)
+                {
+                    // INIT = Print just started. So we clear any older tile buffer we had
+                    case "INIT":
+                        Console.WriteLine("[DBG] Print starting! {0}", jsondata.command);
+                        m_PrintStatus = PrintStatus.PRINTING;
+                        m_listTiles.Clear();
+                        break;
+                    // DATA = with more = 1 it means we still have data to receive, more = 0 means we are done
+                    case "DATA":
+                        if (jsondata.more == 0)
+                        {
+                            Console.WriteLine("[DBG] Print ended! {0}", jsondata.command);
+                            m_PrintStatus = PrintStatus.DONE;
+
+                        }
+                        break;
+                    // We don't care for other commands in this program
+                    default:
+                        Console.WriteLine("[DBG] Unknown command {0}", jsondata.command);
+                        break;
+
+                }
+                return;
+            }
+            // Lines that start with # are treated like comments and ignored
+            else if (text.StartsWith("#"))
+            {
+                Console.WriteLine("[DBG] Ignoring line {0}", text);
+                return;
+            }
+
+            // If we reach this point we SHOULD have a full tile that we can store in byte array
+            var bytes = text
+                .Split(' ')                               // Split into items 
+                .Select(item => Convert.ToByte(item, 16)) // Convert each item into byte
+                .ToArray();                               // Materialize as array
+
+           
+            // We now convert these bytes in a single tile
+            m_listTiles.Add(GameBoyTileToPixels(bytes));
+
+            // This is optional but we also refresh the preview so the user can see the printer feed in real time
+            RefreshImage();
+        }
+
+ 
 
 
 
@@ -320,6 +236,7 @@ namespace gameboy_printer_windows
         private delegate void TextDelegate(string text);
         private void LogData(string text)
         {
+            // This just appends all the data we receive to the logbox
             if (txtSerialLog.InvokeRequired)
             {
                 var d = new TextDelegate(LogData);
@@ -330,109 +247,72 @@ namespace gameboy_printer_windows
                 txtSerialLog.AppendText(text + "\r\n");
             }
         }
-        private void SetStatus(string text)
+
+
+
+
+
+
+        private delegate void SetStatusDelegate(PrintStatus statue);
+        private void SetStatus(PrintStatus status)
         {
             if (lblStatus.InvokeRequired)
             {
-                var d = new TextDelegate(SetStatus);
-                lblStatus.Invoke(d, new object[] { text });
+                var d = new SetStatusDelegate(SetStatus);
+                lblStatus.Invoke(d, new object[] { status });
             }
             else
             {
-                lblStatus.Text = text;
+       
+                checkRemoveBorder.Enabled = status == PrintStatus.DONE;
+               // comboColorPalette.Enabled = status == PrintStatus.DONE;
+               // checkInvertPalette.Enabled = status == PrintStatus.DONE;
+                comboMagnify.Enabled = status == PrintStatus.DONE;
+                btnSave.Enabled = status == PrintStatus.DONE;
+
+                lblStatus.Text = string.Format("Status: {0}", status.ToString());
             }
         }
 
         private delegate void RefreshImageDelegate();
-        private void RefreshPreview()
+        private void RefreshImage()
         {
             if (picPanel.InvokeRequired)
             {
-                var d = new RefreshImageDelegate(RefreshPreview);
+                var d = new RefreshImageDelegate(RefreshImage);
                 picPanel.Invoke(d);
             }
             else
-            {
-                Bitmap b = UpdateBitmap();
+            { 
+                // Generate base image
+                m_currentBitmap = GameBoyPixelsToImage(m_listTiles, (Palette)comboColorPalette.SelectedItem);
 
-
-                picPanel.BackgroundImage = b;
-            }
-        }
-
-
-        private void ProcessData(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text)) return;
-
-            // NOW, I KNOW I SHOULD DO JSON PARSING BUT IT'S REALLY UNNECESSARY HERE
-            if (text.StartsWith("!"))
-            {
-                var json = text.Substring(1);
-                Console.WriteLine("[DBG] Parsing as json line {0}", json);
-                dynamic jsondata = JValue.Parse(json);
-
-                switch ((string)jsondata.command)
+                // Handle cropping
+                if (checkRemoveBorder.Checked)
                 {
-                    case "INIT":
-                        Console.WriteLine("[DBG] Print starting! {0}", jsondata.command);
-                        m_PrintStatus = PrintStatus.PRINTING;
-                        m_Tiles.Clear();
-                        break;
-                    case "DATA":
-                        if (jsondata.more == 0)
+                    const int toRemove = TILE_PIXEL_WIDTH * 2;
+                    m_currentBitmap = CropBitmap(m_currentBitmap,
+                        new Rectangle
                         {
-                            Console.WriteLine("[DBG] Print ended! {0}", jsondata.command);
-                            m_PrintStatus = PrintStatus.DONE;
 
+                            X = toRemove,
+                            Y = toRemove,
+                            Width = m_currentBitmap.Width - toRemove * 2,
+                            Height = m_currentBitmap.Height - toRemove * 2
                         }
-
-                        break;
-                    default:
-                        Console.WriteLine("[DBG] Unknown command {0}", jsondata.command);
-                        break;
-
+                    );
                 }
-                return;
+                // Handle magnification
+                int magnification = new int[] { 1, 2, 4 }[Math.Max(0, comboMagnify.SelectedIndex)];
+                if (magnification > 1)
+                    m_currentBitmap = ResizeBitmap(m_currentBitmap, magnification);
+
+
+
+
+
+                picPanel.BackgroundImage = m_currentBitmap;
             }
-            else if (text.StartsWith("#"))
-            {
-                Console.WriteLine("[DBG] Ignoring line {0}", text);
-                return;
-            }
-
-            var bytes = text
-                .Split(' ')                               // Split into items 
-                .Select(item => Convert.ToByte(item, 16)) // Convert each item into byte
-                .ToArray();                               // Materialize as array
-
-            // Convert to a single tile
-            // Convert to bitmap
-            m_Tiles.Add(decode(bytes));
-            RefreshPreview();
-
-
-
-
-        }
-
-        private byte[] decode(byte[] bytes)
-        {
-
-
-            var pixels = new byte[TILE_PIXEL_WIDTH * TILE_PIXEL_HEIGHT];
-            for (var j = 0; j < TILE_PIXEL_HEIGHT; j++)
-            {
-                for (byte i = 0; i < TILE_PIXEL_WIDTH; i++)
-                {
-                    var hiBit = (bytes[j * 2 + 1] >> (7 - i)) & 1;
-                    var loBit = (bytes[j * 2] >> (7 - i)) & 1;
-                    pixels[j * TILE_PIXEL_WIDTH + i] = (byte)((hiBit << 1) | loBit);
-
-
-                }
-            }
-            return pixels;
         }
 
 
@@ -440,104 +320,38 @@ namespace gameboy_printer_windows
 
 
 
-        Bitmap UpdateBitmap()
-        {
-            int magnification = new int[] { 1, 2, 4 }[ Math.Max(0, comboMagnify.SelectedIndex)];
 
 
-            int imageWidth = TILES_PER_LINE * TILE_PIXEL_WIDTH;
-            int imageHeight = Math.Max(1, (int)Math.Ceiling((double)m_Tiles.Count / TILES_PER_LINE)) * TILE_PIXEL_HEIGHT;
-
-            uint[,] imageData = new uint[imageHeight, imageWidth];
-
-            int offsetX = 0;
-            int offsetY = 0;
-
-            uint[] palette = new uint[4];
-
-            Array.Copy(((Palette)comboColorPalette.SelectedItem).palette, palette, 4);
+        
 
 
-            if (chkInvertPalette.Checked)
-                Array.Reverse(palette);
-
-          
-
-            foreach (var tile in m_Tiles)
-            {
-                int i = 0;
-                for (int y = 0; y < TILE_PIXEL_HEIGHT; y++)
-                {
-                    for (int x = 0; x < TILE_PIXEL_WIDTH; x++)
-                        imageData[offsetY + y, offsetX + x] = palette[tile[i++]];
-
-                }
-                offsetX += TILE_PIXEL_WIDTH;
-                if (offsetX >= TILE_PIXEL_WIDTH * TILES_PER_LINE)
-                {
-                    offsetX = 0;
-                    offsetY += TILE_PIXEL_HEIGHT;
-                }
-            }
-
-
-            // To byte array
-            byte[] imageDataBytes = new byte[imageData.Length * sizeof(uint)];
-            Buffer.BlockCopy(imageData, 0, imageDataBytes, 0, imageDataBytes.Length);
-
-            var bmp = new Bitmap(imageWidth, imageHeight, PixelFormat.Format32bppArgb);
-
-            BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0,
-                                                            bmp.Width,
-                                                            bmp.Height),
-                                                ImageLockMode.WriteOnly,
-                                                bmp.PixelFormat);
-
-            IntPtr pNative = bmpData.Scan0;
-            Marshal.Copy(imageDataBytes, 0, pNative, imageDataBytes.Length);
-
-            bmp.UnlockBits(bmpData);
-
-            if (magnification > 1)
-                bmp = ResizeBitmap(bmp, magnification);
-
-
-            return bmp;
-        }
-
-        private Bitmap ResizeBitmap(Bitmap src, int magnification) {
-            int dstWidth = src.Width * magnification;
-            int dstHeight = src.Height * magnification;
-            Bitmap result = new Bitmap(dstWidth, dstHeight);
-            using (Graphics g = Graphics.FromImage(result))
-            {
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
-                g.DrawImage(src, 0, 0, dstWidth, dstHeight);
-            }
-            return result;
-        }
 
 
 
 
         private void comboColorPalette_SelectedIndexChanged(object sender, EventArgs e)
         {
-            RefreshPreview();
+            RefreshImage();
         }
 
         private void chkInvertPalette_CheckedChanged(object sender, EventArgs e)
         {
-            RefreshPreview();
+            RefreshImage();
 
         }
 
         private void comboMagnify_SelectedIndexChanged(object sender, EventArgs e)
         {
-            RefreshPreview();
+            RefreshImage();
+        }
+        private void checkRemoveBorder_CheckedChanged(object sender, EventArgs e)
+        {
+            RefreshImage();
         }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
+            RefreshImage();
             SaveFileDialog sfd = new SaveFileDialog();
             sfd.Filter = "Bitmap | *.bmp|JPEG | *.jpg|PNG | *.png";
             sfd.DefaultExt = "bmp";
@@ -558,9 +372,10 @@ namespace gameboy_printer_windows
                         break;
                 }
 
-                Bitmap bmp = UpdateBitmap();
-                bmp.Save(sfd.FileName, imageFormat);
+                m_currentBitmap.Save(sfd.FileName, imageFormat);
             }
         }
+
+  
     }
 }

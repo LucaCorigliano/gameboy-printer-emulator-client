@@ -1,0 +1,137 @@
+[
+	{
+		"name":"Original DMG",
+		"palette":[
+			"FFE0F8D0",
+			"FF88C070",
+			"FF346856",
+			"FF081820"
+		]
+	},
+	{
+		"name":"Original DMG Blue",
+		"palette":[
+			"FFD1D0F8",
+			"FF7074C0",
+			"FF343968",
+			"FF0A0820"
+		]
+	},
+	{
+		"name":"Original DMG Red",
+		"palette":[
+			"FFF8D0D0",
+			"FFC07070",
+			"FF683434",
+			"FF200808"
+		]
+	},
+	{
+		"name":"Original DMG Grayscale",
+		"palette":[
+			"FFF7F7F7",
+			"FFBFBFBF",
+			"FF696969",
+			"FF212121"
+		]
+	},
+	{
+		"name":"Grayscale High Contrast",
+		"palette":[
+			"FFFFFFFF",
+			"FFAAAAAA",
+			"FF555555",
+			"FF000000"
+		]
+	},
+	{
+		"name":"Game Boy Pocket",
+		"palette":[
+			"FFC4CFA1",
+			"FF8B956D",
+			"FF4D533C",
+			"FF1F1F1F"
+		]
+	},
+	{
+		"name":"Game Boy Color (West)",
+		"palette":[
+			"FFFFFFFF",
+			"FF7BFF30",
+			"FF0163C6",
+			"FF000000"
+		]
+	},
+	{
+		"name":"Game Boy Color (JAP)",
+		"palette":[
+			"FFFFFFFF",
+			"FFFFAD63",
+			"FF833100",
+			"FF000000"
+		]
+	},
+	{
+		"name":"Ice Cream by Kerrie Lake",
+		"palette":[
+			"FFFFF6D3",
+			"FFF9A875",
+			"FFEB6B6F",
+			"FF7C3F58"
+		]
+	},
+	{
+		"name":"Kirokaze Gameboy by Kirokaze",
+		"palette":[
+			"FFE2F3E4",
+			"FF94E344",
+			"FF46878F",
+			"FF332C50"
+		]
+	},
+	{
+		"name":"Rustic GB by Kerrie Lake",
+		"palette":[
+			"FFEDB4A1",
+			"FFA96868",
+			"FF764462",
+			"FF2C2137"
+		]
+	},
+	{
+		"name":"Mist GB by Kerrie Lake",
+		"palette":[
+			"FFC4F0C2",
+			"FF5AB9A8",
+			"FF1E606E",
+			"FF2D1B00"
+		]
+	},
+	{
+		"name":"AYY4 by Polyducks",
+		"palette":[
+			"FFF1F2DA",
+			"FFFFCE96",
+			"FFFF7777",
+			"FF00303B"
+		]
+	},
+	{
+		"name":"SpaceHaze by WildLeoKnight",
+		"palette":[
+			"FFF8E3C4",
+			"FFCC3495",
+			"FF6B1FB1",
+			"FF0B0630"
+		]
+	},
+	{
+		"name":"Wish GB by Kerrie Lake",
+		"palette":[
+			"FF8BE5FF",
+			"FF608FCF",
+			"FF7550E8",
+			"FF622E4C"
+		]
+	}
+]
