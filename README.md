@@ -20,6 +20,7 @@ Got that? That's great:
 ## Contributing
 As you'll see the code is quite ugly as well as the User Interface. It'll be great to have a cleanup (which I'll probably do in the future) and a UI overhaul.
 Maybe you could add custom Palette loading and something like that.
+(Oh yeah! Error Handling would be great as well!)
 
 ## Credits
 - [Arduino Gameboy Printer Emulator](https://github.com/mofosyne/arduino-gameboy-printer-emulator)
