@@ -1,6 +1,8 @@
 # gameboy-printer-emulator-client
 A client for the GameBoy Printer emulator written in C#
 
+![Preview](https://i.imgur.com/dzW44Gd.gif)
+
 ## Usage
 You'll need the following:
 - A Game Boy (any model that supports DMG games) with a Game Boy Camera Cartridge
