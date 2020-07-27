@@ -188,7 +188,9 @@ namespace gameboy_printer_windows
                     case "INIT":
                         Console.WriteLine("[DBG] Print starting! {0}", jsondata.command);
                         m_PrintStatus = PrintStatus.PRINTING;
+                        checkRemoveBorder.Checked = false;
                         m_listTiles.Clear();
+                     
                         break;
                     // DATA = with more = 1 it means we still have data to receive, more = 0 means we are done
                     case "DATA":

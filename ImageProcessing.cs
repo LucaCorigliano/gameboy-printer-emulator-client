@@ -98,10 +98,14 @@ namespace gameboy_printer_windows
             int dstWidth = src.Width * magnification;
             int dstHeight = src.Height * magnification;
             Bitmap result = new Bitmap(dstWidth, dstHeight);
+
+            var dstRect = new Rectangle(0, 0, dstWidth+ (1 * magnification), dstHeight+(1*magnification));
+            var srcRect = new Rectangle(0, 0, src.Width, src.Height);
             using (Graphics g = Graphics.FromImage(result))
             {
                 g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
-                g.DrawImage(src, 0, 0, dstWidth, dstHeight);
+                g.DrawImage(src, dstRect, srcRect, GraphicsUnit.Pixel);
+
             }
             return result;
         }
